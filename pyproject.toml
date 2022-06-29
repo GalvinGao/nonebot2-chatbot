@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "imgg-nonebot2"
+version = "0.1.0"
+description = "nb2"
+authors = []
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7.3"
+nonebot2 = "^2.0.0-beta.4"
+playwright = "^1.22.0"
+
+[tool.poetry.dev-dependencies]
+nb-cli = "^0.6.0"
+
+[tool.nonebot]
+plugins = ["nonebot_plugin_status"]
+plugin_dirs = ["nb2/plugins"]
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
