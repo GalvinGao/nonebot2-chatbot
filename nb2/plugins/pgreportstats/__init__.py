@@ -90,6 +90,7 @@ async def get_stats_sum():
 
 async def handle_route(route, request):
     # check if domain is 'nextprod-prom.exusiai.dev'; request.url is a str
+    # FIXME: use proper URL parsing instead of substring matching
     if 'nextprod-prom.exusiai.dev' not in request.url:
         logger.debug('playwright route: not nextprod-prom.exusiai.dev: skipping request ({})', request.url)
         await route.continue_()
@@ -102,31 +103,41 @@ async def handle_route(route, request):
         await route.continue_(headers=headers)
 
 async def screenshot_sum():
+    # FIXME: parse path to screenshot based on proper variable instead of using
+    # a hardcoded path
     os.makedirs('tmp', exist_ok=True)
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         context = await browser.new_context(
             locale='zh-CN',
-            timezone_id='Asia/Shanghai',
+            timezone_id='Asia/Shanghai', # make screenshot show correct timezone
         )
         page = await context.new_page()
+        # modify requests on-the-fly
         await page.route("**/*", handle_route)
         await page.goto(PROMSITE_SUM_URL)
-        sel = 'div.tab-pane.active div[class^=graph]'
+        screenshot_el_sel = 'div.tab-pane.active div[class^=graph]'
         # await for element sel to be visible
-        await page.wait_for_selector(sel)
-        # hide .navbar 
-        await page.evaluate('''
-            document.querySelector('div.tab-pane.active div[class^=graph]').style.paddingTop = '24px';
+        await page.wait_for_selector(screenshot_el_sel)
+        # various adjustments via JS
+        await page.evaluate(f'''
+            // extra padding for vertical alignment
+            document.querySelector('{screenshot_el_sel}').style.paddingTop = '24px';
+
+            // hide navbar: navbar shows incorrectly in the screenshot
             document.querySelector('.navbar').style.display = 'none';
+
+            // hide mouse hints under the legends area ("CMD+Click ...")
             document.querySelector('.graph-legend .pl-1.mt-1.text-muted').style.display = 'none';
+
+            // check the use local time checkbox to produce time matching environment (defined in browser.new_context)
             document.querySelector('#use-local-time-checkbox').click();
         ''')
         # test checked state of #use-local-time-checkbox 
         await page.wait_for_selector('#use-local-time-checkbox:checked')
         # take screenshot
         await page.pause()
-        await page.locator(sel).first.screenshot(path=SCREENSHOT_DEST)
+        await page.locator(screenshot_el_sel).first.screenshot(path=SCREENSHOT_DEST)
         await browser.close()
 
 def format_float_str(f):
