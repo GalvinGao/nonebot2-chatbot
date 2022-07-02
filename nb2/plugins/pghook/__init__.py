@@ -15,7 +15,7 @@ config = Config.parse_obj(global_config)
 
 app: FastAPI = nonebot.get_app()
 
-@app.get("/api/v1/notify")
+@app.post("/api/v1/notify")
 async def notify_hook(context: NotifyContext):
     bot = nonebot.get_bot()
     m = Message([
