@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -13,5 +15,5 @@ class NotifyContext(BaseModel):
     description: str
     fingerprint: str
     alertmanagerURL: str
-    runbookURL: str
+    runbookURL: Optional[str]
     slim: bool = False

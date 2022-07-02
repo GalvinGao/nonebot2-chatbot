@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "imgg-nonebot2"
+name = "imggbot"
 version = "0.1.0"
 description = "nb2"
 authors = []
