@@ -25,7 +25,7 @@ PROMQL_SUM = "https://nextprod-prom.exusiai.dev/api/v1/query?query=sum+by+%28sou
 PROMQL_VERIFY_HIST = "https://nextprod-prom.exusiai.dev/api/v1/query?query=max_over_time%28histogram_quantile%280.99%2C+sum+by%28le%2C+verifier%29+%28rate%28penguinbackend_report_verify_duration_seconds_bucket%5B5m%5D%29%29%29%5B1d%3A%5D%29"
 PROMSITE_SUM_URL = "https://nextprod-prom.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%5B5m%5D)%20%3E%200)&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
 
-stats = on_command('penguinstatus', aliases={'status'})
+stats = on_command('penguinuploads', aliases={'uploads'})
 last_run = None
 
 
@@ -37,20 +37,20 @@ async def handler(matcher: Matcher, args: Message = CommandArg()):
     else:
         delta = datetime.datetime.now() - last_run
         if delta.seconds < config.report_stats_interval:
-            return await stats.finish(f'penguinstatus: 调用过快。查询限频 {config.report_stats_interval} 秒')
+            return await stats.finish(f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒')
             
-    await stats.send("penguinstatus: 开始查询 Prometheus...")
-    logger.debug("penguinstatus: 开始查询 Prometheus...")
+    await stats.send("uploads: 开始查询 Prometheus...")
+    logger.debug("uploads: 开始查询 Prometheus...")
     try:
         [sum, hist, _] = await asyncio.gather(get_stats_sum(), get_stats_histogram(), screenshot_sum())
     except Exception as e:
         random_log_id = str(int(time()))
-        logger.debug(f"penguinstatus: 查询 Prometheus 失败 ({random_log_id}):", e)
+        logger.debug(f"uploads: 查询 Prometheus 失败 ({random_log_id}):", e)
         logger.exception(e)
-        return await stats.finish(f'penguinstatus: 查询 Prometheus 失败 ({random_log_id})')
-    logger.debug("penguinstatus: Got responses from queries")
+        return await stats.finish(f'uploads: 查询 Prometheus 失败 ({random_log_id})')
+    logger.debug("uploads: Got responses from queries")
 
-    msg = MessageSegment.text(f'penguinstatus: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n') + \
+    msg = MessageSegment.text(f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n') + \
         MessageSegment.image(await read_file(SCREENSHOT_DEST)) + \
         f'\n\n{hist}'
     
