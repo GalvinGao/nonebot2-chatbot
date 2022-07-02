@@ -16,7 +16,6 @@ aiohttp = "^3.8.1"
 nb-cli = "^0.6.0"
 
 [tool.nonebot]
-plugins = ["nonebot_plugin_status"]
 plugin_dirs = ["nb2/plugins"]
 
 [build-system]

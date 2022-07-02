@@ -1,5 +1,5 @@
-import string
 from pydantic import BaseModel
+
 
 class NotifyContextTheme(BaseModel):
     title: str
@@ -13,5 +13,5 @@ class NotifyContext(BaseModel):
     description: str
     fingerprint: str
     alertmanagerURL: str
-    runbookURL: string
+    runbookURL: str
     slim: bool = False
