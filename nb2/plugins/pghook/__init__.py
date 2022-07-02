@@ -35,7 +35,7 @@ def format_stats(context: NotifyContext) -> str:
 
 @app.post("/api/v1/notify")
 async def notify_hook(context: NotifyContext):
-    if context.theme.title == "Resolved":
+    if context.theme.title == "Resolved" or context.slim:
         return
     bot = nonebot.get_bot()
     m = Message([
