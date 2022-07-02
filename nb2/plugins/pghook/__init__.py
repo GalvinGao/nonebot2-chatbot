@@ -16,7 +16,7 @@ config = Config.parse_obj(global_config)
 app: FastAPI = nonebot.get_app()
 
 TEMPLATE: str = """
-运维告警已触发
+{banner}
 
 [{level}] {title}
 {summary}
@@ -26,6 +26,7 @@ From: Prometheus (fingerprint: {fingerprint})"""
 
 def format_stats(context: NotifyContext) -> str:
     return TEMPLATE.format(
+        banner="Prometheus Alert",
         level=apply_fancyuni("bold", context.theme.title),
         title=context.title,
         summary=context.summary,
@@ -34,6 +35,8 @@ def format_stats(context: NotifyContext) -> str:
 
 @app.post("/api/v1/notify")
 async def notify_hook(context: NotifyContext):
+    if context.theme.title == "Resolved":
+        return
     bot = nonebot.get_bot()
     m = Message([
         MessageSegment.at(498704999),
