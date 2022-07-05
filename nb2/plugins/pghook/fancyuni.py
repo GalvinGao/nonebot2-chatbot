@@ -1,5 +1,3 @@
-# From https://dash.cloudflare.com/b969e05d21d8baaace14bf5ad5995ed7/workers/services/view/alertmanager-feishu-notifier/production/logs/live
-
 # sets are Sets[Tuple[str, str]], where
 # the first str is the original replacable characters,
 # and the second str is the corresponding replacement characters.
