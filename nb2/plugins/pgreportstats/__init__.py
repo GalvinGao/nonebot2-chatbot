@@ -21,9 +21,9 @@ config = Config.parse_obj(global_config)
 
 SCREENSHOT_DEST = "tmp/screenshot.jpg"
 
-PROMQL_SUM = "https://nextprod-prom.exusiai.dev/api/v1/query?query=sum+by+%28source_name%29+%28increase%28penguinbackend_report_reliability%5B24h%5D%29%29"
-PROMQL_VERIFY_HIST = "https://nextprod-prom.exusiai.dev/api/v1/query?query=max_over_time%28histogram_quantile%280.99%2C+sum+by%28le%2C+verifier%29+%28rate%28penguinbackend_report_verify_duration_seconds_bucket%5B5m%5D%29%29%29%5B1d%3A%5D%29"
-PROMSITE_SUM_URL = "https://nextprod-prom.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%5B5m%5D)%20%3E%200)&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
+PROMQL_SUM = "https://prometheus.exusiai.dev/api/v1/query?query=sum+by+%28source_name%29+%28increase%28penguinbackend_report_reliability%5B24h%5D%29%29"
+PROMQL_VERIFY_HIST = "https://prometheus.exusiai.dev/api/v1/query?query=max_over_time%28histogram_quantile%280.99%2C+sum+by%28le%2C+verifier%29+%28rate%28penguinbackend_report_verify_duration_seconds_bucket%5B5m%5D%29%29%29%5B1d%3A%5D%29"
+PROMSITE_SUM_URL = "https://prometheus.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%5B5m%5D)%20%3E%200)&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
 
 stats = on_command('penguinuploads', aliases={'uploads'})
 last_run = None
@@ -89,13 +89,13 @@ async def get_stats_sum():
 
 
 async def handle_route(route, request):
-    # check if domain is 'nextprod-prom.exusiai.dev'; request.url is a str
+    # check if domain is 'prometheus.exusiai.dev'; request.url is a str
     # FIXME: use proper URL parsing instead of substring matching
-    if 'nextprod-prom.exusiai.dev' not in request.url:
-        logger.debug('playwright route: not nextprod-prom.exusiai.dev: skipping request ({})', request.url)
+    if 'prometheus.exusiai.dev' not in request.url:
+        logger.debug('playwright route: not prometheus.exusiai.dev: skipping request ({})', request.url)
         await route.continue_()
     else:
-        logger.debug('playwright route: IS nextprod-prom.exusiai.dev: handling request ({})', request.url)
+        logger.debug('playwright route: IS prometheus.exusiai.dev: handling request ({})', request.url)
         logger.trace('playwright route: using cf_access_client_id: {}, cf_access_client_secret: {}', config.cf_access_client_id, config.cf_access_client_secret)
         headers = route.request.headers
         headers['CF-Access-Client-Id'] = config.cf_access_client_id
