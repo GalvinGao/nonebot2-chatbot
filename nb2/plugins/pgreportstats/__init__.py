@@ -1,8 +1,11 @@
+import argparse
 import asyncio
 import datetime
 import itertools
 import os
+from pprint import pprint
 from time import time
+from urllib.parse import urlparse
 
 import aiohttp
 from loguru import logger
@@ -24,22 +27,23 @@ SCREENSHOT_DEST = "tmp/screenshot.jpg"
 PROMQL_SUM = "https://prometheus.exusiai.dev/api/v1/query?query=sum+by+%28source_name%29+%28increase%28penguinbackend_report_reliability%5B24h%5D%29%29"
 PROMQL_VERIFY_HIST = "https://prometheus.exusiai.dev/api/v1/query?query=max_over_time%28histogram_quantile%280.99%2C+sum+by%28le%2C+verifier%29+%28rate%28penguinbackend_report_verify_duration_seconds_bucket%5B5m%5D%29%29%29%5B1d%3A%5D%29"
 PROMSITE_SUM_URL = "https://prometheus.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%5B5m%5D)%20%3E%200)&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
+PENGUIN_BACKEND_USERS_URL = "https://penguin-stats.io/api/admin/analytics/report-unique-users/by-source?recent={recent}"
 
-stats = on_command('penguinuploads', aliases={'uploads'})
-last_run = None
+uploads = on_command('penguinuploads', aliases={'uploads'})
+uploads_last_run = None
 
 
-@stats.handle()
-async def handler(matcher: Matcher, args: Message = CommandArg()):
-    global last_run
-    if last_run is None:
-        last_run = datetime.datetime.now()
+@uploads.handle()
+async def uploads_handler(matcher: Matcher, args: Message = CommandArg()):
+    global uploads_last_run
+    if uploads_last_run is None:
+        uploads_last_run = datetime.datetime.now()
     else:
-        delta = datetime.datetime.now() - last_run
+        delta = datetime.datetime.now() - uploads_last_run
         if delta.seconds < config.report_stats_interval:
-            return await stats.finish(f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒')
-            
-    await stats.send("uploads: 开始查询 Prometheus...")
+            return await uploads.finish(f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒')
+    
+    await uploads.send("uploads: 开始查询 Prometheus...")
     logger.debug("uploads: 开始查询 Prometheus...")
     try:
         [sum, hist, _] = await asyncio.gather(get_stats_sum(), get_stats_histogram(), screenshot_sum())
@@ -47,31 +51,37 @@ async def handler(matcher: Matcher, args: Message = CommandArg()):
         random_log_id = str(int(time()))
         logger.debug(f"uploads: 查询 Prometheus 失败 ({random_log_id}):", e)
         logger.exception(e)
-        return await stats.finish(f'uploads: 查询 Prometheus 失败 ({random_log_id})')
+        return await uploads.finish(f'uploads: 查询 Prometheus 失败 ({random_log_id})')
     logger.debug("uploads: Got responses from queries")
 
     msg = MessageSegment.text(f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n') + \
         MessageSegment.image(await read_file(SCREENSHOT_DEST)) + \
         f'\n\n{hist}'
     
-    await stats.finish(msg)
+    await uploads.finish(msg)
 
 async def read_file(path):
     with open(path, 'rb') as f:
         return f.read()
 
-async def fetch(url):
+async def fetch(url, auth):
     async with aiohttp.ClientSession() as session:
-        logger.trace('api fetches: CF_ACCESS_CLIENT_ID: {}, CF_ACCESS_CLIENT_SECRET: {}', config.cf_access_client_id, config.cf_access_client_secret)
-        async with session.get(url, headers={
-            'CF-Access-Client-Id': config.cf_access_client_id,
-            'CF-Access-Client-Secret': config.cf_access_client_secret
-        }) as response:
+        headers = {}
+        if auth == 'cloudflare':
+            headers = {
+                'CF-Access-Client-Id': config.cf_access_client_id,
+                'CF-Access-Client-Secret': config.cf_access_client_secret
+            }
+        elif auth == 'penguin':
+            headers = {
+                'Authorization': f"Bearer {config.penguin_admin_api_key}"
+            }
+        async with session.get(url, headers=headers) as response:
             return await response.json()
 
 async def get_stats_histogram():
     print("get_stats_histogram: start")
-    obj = await fetch(PROMQL_VERIFY_HIST)
+    obj = await fetch(PROMQL_VERIFY_HIST, auth='cloudflare')
     print("get_stats_histogram: got response")
     parsed = parse_prom_resp(obj, 'verifier')
     list_str = '\n'.join(
@@ -80,7 +90,7 @@ async def get_stats_histogram():
 
 async def get_stats_sum():
     print("get_stats_sum: start")
-    obj = await fetch(PROMQL_SUM)
+    obj = await fetch(PROMQL_SUM, auth='cloudflare')
     print("get_stats_sum: got response")
     parsed = parse_prom_resp(obj, 'source_name')
     list_str = '\n'.join(
@@ -152,3 +162,41 @@ def parse_prom_resp(resp, groupkey):
 
     # mapped turns values
     return sorted(mapped, key=lambda x: x[1], reverse=True)
+
+users = on_command('penguinusers', aliases={'users'})
+users_last_run = None
+
+@users.handle()
+async def users_handler(args: Message = CommandArg()):
+    global users_last_run
+    if users_last_run is None:
+        users_last_run = datetime.datetime.now()
+    else:
+        delta = datetime.datetime.now() - users_last_run
+        if delta.seconds < config.report_stats_interval:
+            return await users.finish(f'users: 调用过快。查询限频 {config.report_stats_interval} 秒')
+
+    if len(args) >= 1:
+        recent = str(args[0]).strip()
+    else:
+        recent = '24h'
+    logger.info(f"users: recent: {recent}")
+
+    url = PENGUIN_BACKEND_USERS_URL.format(recent=recent)
+    logger.debug('users: url: {}', url)
+
+    try:
+        data = await fetch(url, auth='penguin')
+        logger.debug('users: got response: {}', data)
+
+        data = sorted(data.items(), key=lambda x: x[1], reverse=True)
+
+        list_str = '\n'.join(
+            f"  - {k}: {int(v)}" for [k, v] in data if int(v) > 0)
+
+        msg = MessageSegment.text(f"users: 汇报掉落用户数\n{list_str}")
+    except Exception as e:
+        logger.exception(e)
+        return await users.finish(MessageSegment.text(f"users: 获取汇报掉落用户数时出现错误"))
+
+    await users.finish(msg)

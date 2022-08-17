@@ -9,5 +9,7 @@ class Config(BaseSettings):
     # report_stats_interval: by default it's 60 seconds
     report_stats_interval = 60
 
+    penguin_admin_api_key = "admin_api_key"
+
     class Config:
         extra = "ignore"
