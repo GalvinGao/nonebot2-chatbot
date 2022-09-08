@@ -26,7 +26,7 @@ SCREENSHOT_DEST = "tmp/screenshot.jpg"
 
 PROMQL_SUM = "https://prometheus.exusiai.dev/api/v1/query?query=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%7Bjob!~%22.*-preview%24%22%7D%5B24h%5D))"
 PROMQL_VERIFY_HIST = "https://prometheus.exusiai.dev/api/v1/query?query=max_over_time(histogram_quantile(0.99%2C%20sum%20by(le%2C%20verifier)%20(rate(penguinbackend_report_verify_duration_seconds_bucket%7Bjob!~%22.*-preview%22%7D%5B5m%5D)))%5B1d%3A%5D)"
-PROMSITE_SUM_URL = "https://prometheus.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%7Bjob!~%22.*-preview%24%22%7D%5B24h%5D))&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
+PROMSITE_SUM_URL = "https://prometheus.exusiai.dev/graph?g0.expr=sum%20by%20(source_name)%20(increase(penguinbackend_report_reliability%7Bjob!~%22.*-preview%24%22%7D%5B5m%5D))&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
 PENGUIN_BACKEND_USERS_URL = "https://penguin-stats.io/api/admin/analytics/report-unique-users/by-source?recent={recent}"
 
 uploads = on_command('penguinuploads', aliases={'uploads'})
