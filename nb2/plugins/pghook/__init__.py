@@ -39,8 +39,8 @@ async def notify_hook(context: NotifyContext):
         return
     bot = nonebot.get_bot()
     m = Message([
-        MessageSegment.at(498704999),
-        MessageSegment.at(2403901511),
+        # MessageSegment.at(498704999),
+        # MessageSegment.at(2403901511),
         MessageSegment.text(format_stats(context)),
     ])
     r = await bot.call_api("send_msg", message=m, group_id=config.pghook_destination_group_id)
