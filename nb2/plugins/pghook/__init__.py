@@ -15,8 +15,7 @@ config = Config.parse_obj(global_config)
 
 app: FastAPI = nonebot.get_app()
 
-TEMPLATE: str = """
-{banner}
+TEMPLATE: str = """{banner}
 
 [{level}] {title}
 {summary}
