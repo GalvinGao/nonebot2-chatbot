@@ -29,6 +29,7 @@ PROMQL_VERIFY_HIST = "https://prometheus.exusiai.dev/api/v1/query?query=max_over
 PROMSITE_SUM_URL = "https://prometheus.exusiai.dev/graph?g0.expr=sum%20by%20(source_name%2C%20reliability)%20(increase(penguinbackend_report_reliability%7Bjob!~%22.*-preview%24%22%7D%5B5m%5D))&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=2d&g0.step_input=300"
 PENGUIN_BACKEND_USERS_URL = "https://penguin-stats.io/api/admin/analytics/report-unique-users/by-source?recent={recent}"
 
+
 uploads = on_command('penguinuploads', aliases={'uploads'})
 uploads_last_run = None
 
@@ -42,7 +43,7 @@ async def uploads_handler(matcher: Matcher, args: Message = CommandArg()):
         delta = datetime.datetime.now() - uploads_last_run
         if delta.seconds < config.report_stats_interval:
             return await uploads.finish(f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒')
-    
+
     await uploads.send("uploads: 开始查询 Prometheus...")
     logger.debug("uploads: 开始查询 Prometheus...")
     try:
@@ -57,12 +58,14 @@ async def uploads_handler(matcher: Matcher, args: Message = CommandArg()):
     msg = MessageSegment.text(f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n') + \
         MessageSegment.image(await read_file(SCREENSHOT_DEST)) + \
         f'\n\n{hist}'
-    
+
     await uploads.finish(msg)
+
 
 async def read_file(path):
     with open(path, 'rb') as f:
         return f.read()
+
 
 async def fetch(url, auth):
     async with aiohttp.ClientSession() as session:
@@ -79,6 +82,7 @@ async def fetch(url, auth):
         async with session.get(url, headers=headers) as response:
             return await response.json()
 
+
 async def get_stats_histogram():
     print("get_stats_histogram: start")
     obj = await fetch(PROMQL_VERIFY_HIST, auth='cloudflare')
@@ -87,6 +91,7 @@ async def get_stats_histogram():
     list_str = '\n'.join(
         f"  - 检查 \"{k}\": {format_float_str(v*1000)}ms" for [k, v] in parsed)
     return f"# 最近 24hr 掉落汇报检查 P99 耗时\n{list_str}"
+
 
 async def get_stats_sum():
     print("get_stats_sum: start")
@@ -102,15 +107,19 @@ async def handle_route(route, request):
     # check if domain is 'prometheus.exusiai.dev'; request.url is a str
     # FIXME: use proper URL parsing instead of substring matching
     if 'prometheus.exusiai.dev' not in request.url:
-        logger.debug('playwright route: not prometheus.exusiai.dev: skipping request ({})', request.url)
+        logger.debug(
+            'playwright route: not prometheus.exusiai.dev: skipping request ({})', request.url)
         await route.continue_()
     else:
-        logger.debug('playwright route: IS prometheus.exusiai.dev: handling request ({})', request.url)
-        logger.trace('playwright route: using cf_access_client_id: {}, cf_access_client_secret: {}', config.cf_access_client_id, config.cf_access_client_secret)
+        logger.debug(
+            'playwright route: IS prometheus.exusiai.dev: handling request ({})', request.url)
+        logger.trace('playwright route: using cf_access_client_id: {}, cf_access_client_secret: {}',
+                     config.cf_access_client_id, config.cf_access_client_secret)
         headers = route.request.headers
         headers['CF-Access-Client-Id'] = config.cf_access_client_id
         headers['CF-Access-Client-Secret'] = config.cf_access_client_secret
         await route.continue_(headers=headers)
+
 
 async def screenshot_sum():
     # FIXME: parse path to screenshot based on proper variable instead of using
@@ -120,7 +129,7 @@ async def screenshot_sum():
         browser = await p.chromium.launch()
         context = await browser.new_context(
             locale='zh-CN',
-            timezone_id='Asia/Shanghai', # make screenshot show correct timezone
+            timezone_id='Asia/Shanghai',  # make screenshot show correct timezone
         )
         page = await context.new_page()
         # modify requests on-the-fly
@@ -143,15 +152,17 @@ async def screenshot_sum():
             // check the use local time checkbox to produce time matching environment (defined in browser.new_context)
             document.querySelector('#use-local-time-checkbox').click();
         ''')
-        # test checked state of #use-local-time-checkbox 
+        # test checked state of #use-local-time-checkbox
         await page.wait_for_selector('#use-local-time-checkbox:checked')
         # take screenshot
         await page.pause()
         await page.locator(screenshot_el_sel).first.screenshot(path=SCREENSHOT_DEST)
         await browser.close()
 
+
 def format_float_str(f):
     return f"{f:.2f}"
+
 
 def parse_prom_resp(resp, groupkey):
     result = resp['data']['result']
@@ -163,8 +174,10 @@ def parse_prom_resp(resp, groupkey):
     # mapped turns values
     return sorted(mapped, key=lambda x: x[1], reverse=True)
 
+
 users = on_command('penguinusers', aliases={'users'})
 users_last_run = None
+
 
 @users.handle()
 async def users_handler(args: Message = CommandArg()):
