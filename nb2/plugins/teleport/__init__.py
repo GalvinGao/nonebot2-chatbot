@@ -18,8 +18,9 @@ tempdir = tempfile.TemporaryDirectory()
 
 def format_prefix(event: OneBotGroupMessageEvent):
     name = event.sender.card or event.sender.nickname
+    group_id = event.group_id
     if name:
-        return name + "\n"
+        return name + " (" + str(group_id) + ")\n"
     return ""
 
 
