@@ -4,6 +4,7 @@ from nonebot.adapters.telegram.event import GroupMessageEvent as TelegramGroupMe
 from nonebot.adapters.telegram.model import InputMediaPhoto
 
 from nonebot.adapters.onebot.v11 import GroupMessageEvent as OneBotGroupMessageEvent
+from nonebot.adapters.onebot.v11 import MessageSegment
 import asyncio
 import httpx
 import tempfile
@@ -87,9 +88,23 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
         return
     print("received new message from Telegram:", event)
 
-    prefix = "@" + (event.from_.first_name or "") + " " + \
-        (event.from_.last_name or "") + ": "
+    prefix = "tg::" + (event.from_.first_name or "") + " " + \
+        (event.from_.last_name or "") + "\n"
+
+    text = event.message.extract_plain_text()
+
+    messages = MessageSegment()
+
+    if text:
+        messages.append(MessageSegment.text(text))
+    
+    photo = [seg for seg in event.message if seg.type == "photo"]
+    if photo:
+        file_ = await bot.call_api("get_file", file_id=photo[0].file_id)
+        url = "https://api.telegram.org/file/bot{token}/{path}".format(
+            token=global_config.TELEGRAM_BOT_TOKEN, path=file_.file_path)
+        messages.append(MessageSegment.image(url))
 
     onebot = get_bot(config.onebot_bot_self_id)
     await onebot.call_api(
-        "send_msg", message=prefix + event.message.extract_plain_text(), group_id=config.onebot_bot_dest_group_id)
+        "send_msg", group_id=config.onebot_bot_dest_group_id, message=prefix + messages)
