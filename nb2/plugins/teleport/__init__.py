@@ -93,7 +93,7 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
 
     text = event.message.extract_plain_text()
 
-    messages = MessageSegment()
+    messages = MessageSegment.text(prefix)
 
     if text:
         messages.append(MessageSegment.text(text))
@@ -107,4 +107,4 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
 
     onebot = get_bot(config.onebot_bot_self_id)
     await onebot.call_api(
-        "send_msg", group_id=config.onebot_bot_dest_group_id, message=prefix + messages)
+        "send_msg", group_id=config.onebot_bot_dest_group_id, message=messages)
