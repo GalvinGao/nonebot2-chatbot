@@ -96,14 +96,14 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
     messages = MessageSegment.text(prefix)
 
     if text:
-        messages.append(MessageSegment.text(text))
+        messages += MessageSegment.text(text)
     
-    photo = [seg for seg in event.message if seg.type == "photo"]
-    if photo:
-        file_ = await bot.call_api("get_file", file_id=photo[0].file_id)
+    photo_segs = [seg for seg in event.message if seg.type == "photo"]
+    if photo_segs:
+        file_ = await bot.call_api("get_file", file_id=photo_segs[0].data["file"])
         url = "https://api.telegram.org/file/bot{token}/{path}".format(
             token=global_config.TELEGRAM_BOT_TOKEN, path=file_.file_path)
-        messages.append(MessageSegment.image(url))
+        messages += MessageSegment.image(url)
 
     onebot = get_bot(config.onebot_bot_self_id)
     await onebot.call_api(
