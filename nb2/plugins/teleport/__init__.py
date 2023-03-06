@@ -102,7 +102,7 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
     if photo_segs:
         file_ = await bot.call_api("get_file", file_id=photo_segs[0].data["file"])
         url = "https://api.telegram.org/file/bot{token}/{path}".format(
-            token=global_config.TELEGRAM_BOT_TOKEN, path=file_.file_path)
+            token=config.tg_bot_token, path=file_.file_path)
         messages += MessageSegment.image(url)
 
     onebot = get_bot(config.onebot_bot_self_id)
