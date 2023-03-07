@@ -20,7 +20,7 @@ def format_prefix(event: OneBotGroupMessageEvent):
     name = event.sender.card or event.sender.nickname
     group_id = event.group_id
     if name:
-        return name + " (" + str(group_id) + ")\n"
+        return name + " (#" + str(group_id) + ")\n"
     return ""
 
 
@@ -89,8 +89,8 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
         return
     print("received new message from Telegram:", event)
 
-    prefix = "tg::" + (event.from_.first_name or "") + " " + \
-        (event.from_.last_name or "") + "\n"
+    prefix = "[" + (event.from_.first_name or "") + " " + \
+        (event.from_.last_name or "") + "@tg]\n"
 
     text = event.message.extract_plain_text()
 
