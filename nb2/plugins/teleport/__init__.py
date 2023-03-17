@@ -8,6 +8,7 @@ from nonebot.adapters.onebot.v11 import MessageSegment
 import asyncio
 import httpx
 import tempfile
+import re
 from .config import Config
 
 global_config = get_driver().config
@@ -106,6 +107,16 @@ async def telegram_handler(bot: TelegramBot, event: TelegramGroupMessageEvent):
             token=config.tg_bot_token, path=file_.file_path)
         messages += MessageSegment.image(url)
     
+    destination_group = config.onebot_bot_dest_group_id
+    reply_to = event.reply_to_message
+    if reply_to:
+        content = reply_to.message.extract_plain_text()
+        # match original group id from the message: #123728372
+        match = re.search(r"#(\d+)", content)
+        if match:
+            destination_group = int(match.group(1))
+            print("matched destination group:", destination_group)
+
     onebot = get_bot(config.onebot_bot_self_id)
     await onebot.call_api(
-        "send_msg", group_id=config.onebot_bot_dest_group_id, message=messages)
+        "send_msg", group_id=destination_group, message=messages)
