@@ -39,9 +39,9 @@ UNRELIABLE_REPORT_TEMPLATE: str = """{banner}
 [{level}] {title}
 {summary}
 
-From: Prometheus (fingerprint: {fingerprint})
+{description}
 
-"""
+From: Prometheus (fingerprint: {fingerprint}) """
 
 
 def format_unreliable_report_template_message(context: NotifyContext) -> str:
@@ -49,6 +49,7 @@ def format_unreliable_report_template_message(context: NotifyContext) -> str:
         banner="汇报数据源告警",
         level=apply_fancyuni("bold", context.theme.title),
         title=context.title,
+        description=context.description,
         summary=context.summary,
         fingerprint=context.fingerprint,
     )
