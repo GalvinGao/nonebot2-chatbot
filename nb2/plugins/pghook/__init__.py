@@ -48,7 +48,7 @@ From: Prometheus (fingerprint: {fingerprint})
 
 def format_unreliable_report_template_message(context: NotifyContext) -> str:
     return UNRELIABLE_REPORT_TEMPLATE.format(
-        banner="汇报数据源告警",
+        banner="⚠️ 汇报数据源偏差告警已触发",
         level=apply_fancyuni("bold", context.theme.title),
         title=context.title,
         description=context.description,
