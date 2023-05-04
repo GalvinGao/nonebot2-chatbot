@@ -11,7 +11,7 @@ class NotifyContext(BaseModel):
     theme: NotifyContextTheme
     title: str
     summary: str
-    labels: str
+    labels: dict[str, str]
     description: str
     fingerprint: str
     alertmanagerURL: str
