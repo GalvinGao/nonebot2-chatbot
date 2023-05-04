@@ -56,7 +56,7 @@ def format_unreliable_report_template_message(context: NotifyContext) -> str:
 async def notify_hook(context: NotifyContext):
     if context.theme.title == "Resolved" or context.slim:
         return
-    if context.theme.title == "BackendHighUnreliableReportRate":
+    if context.title == "BackendHighUnreliableReportRate":
         source_name = context.labels.get("source_name")
         if source_name is not None:
             mentions: list[int] = []
