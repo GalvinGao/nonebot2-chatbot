@@ -41,11 +41,13 @@ UNRELIABLE_REPORT_TEMPLATE: str = """{banner}
 
 {description}
 
-From: Prometheus (fingerprint: {fingerprint}) """
+From: Prometheus (fingerprint: {fingerprint})
+
+"""
 
 
 def format_unreliable_report_template_message(context: NotifyContext) -> str:
-    return BASE_TEMPLATE.format(
+    return UNRELIABLE_REPORT_TEMPLATE.format(
         banner="汇报数据源告警",
         level=apply_fancyuni("bold", context.theme.title),
         title=context.title,
