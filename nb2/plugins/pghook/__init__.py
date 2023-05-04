@@ -39,7 +39,9 @@ UNRELIABLE_REPORT_TEMPLATE: str = """{banner}
 [{level}] {title}
 {summary}
 
-From: Prometheus (fingerprint: {fingerprint})"""
+From: Prometheus (fingerprint: {fingerprint})
+
+"""
 
 
 def format_unreliable_report_template_message(context: NotifyContext) -> str:
@@ -70,7 +72,7 @@ async def notify_hook(context: NotifyContext):
             segments.extend([MessageSegment.at(mention) for mention in mentions])
             m = Message(segments)
             bot = nonebot.get_bot(config.onebot_bot_self_id)
-            r = await bot.call_api("send_msg", message=m, group_id=config.pghook_destination_group_id)
+            r = await bot.call_api("send_msg", message=m, group_id=config.pghook_unreliable_report_group_id)
             return {"message": r}
     bot = nonebot.get_bot()
     m = Message([

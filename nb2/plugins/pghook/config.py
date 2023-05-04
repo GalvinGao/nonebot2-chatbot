@@ -9,6 +9,7 @@ class Config(BaseSettings):
     # Your Config Here
 
     pghook_destination_group_id: int = 0
+    pghook_unreliable_report_group_id: int = 0
 
     # BackendHighUnreliableReportRate
     pghook_unreliable_report_rate_mention_map: list[UnreliableReportRateMention] = []
