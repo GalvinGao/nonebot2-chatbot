@@ -13,5 +13,7 @@ class Config(BaseSettings):
     # BackendHighUnreliableReportRate
     pghook_unreliable_report_rate_mention_map: list[UnreliableReportRateMention] = []
 
+    onebot_bot_self_id: str = ""
+
     class Config:
         extra = "ignore"

@@ -69,7 +69,7 @@ async def notify_hook(context: NotifyContext):
             ]
             segments.extend([MessageSegment.at(mention) for mention in mentions])
             m = Message(segments)
-            bot = nonebot.get_bot()
+            bot = nonebot.get_bot(config.onebot_bot_self_id)
             r = await bot.call_api("send_msg", message=m, group_id=config.pghook_destination_group_id)
             return {"message": r}
     bot = nonebot.get_bot()
