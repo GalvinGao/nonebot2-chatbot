@@ -179,7 +179,7 @@ users_last_run = None
 
 
 @users.handle()
-async def users_handler(bot: Bot, event: MessageEvent, args: list[CommandArg]):
+async def users_handler(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     global users_last_run
     if users_last_run is None:
         users_last_run = datetime.datetime.now()
