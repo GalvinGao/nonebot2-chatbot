@@ -186,8 +186,8 @@ async def users_handler(bot: Bot, event: MessageEvent, args: Message = CommandAr
         if delta.seconds < config.report_stats_interval:
             return await bot.send(event, f'users: 调用过快。查询限频 {config.report_stats_interval} 秒', reply_to_message_id=event.message_id)
 
-    if len(args) >= 1:
-        recent = str(args[0]).strip()
+    if len(args) > 1:
+        recent = str(args[1]).strip()
     else:
         recent = '24h'
     logger.info(f"users: recent: {recent}")
