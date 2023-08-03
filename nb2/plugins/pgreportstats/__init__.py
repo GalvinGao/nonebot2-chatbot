@@ -54,8 +54,6 @@ async def uploads_handler(bot: Bot, event: MessageEvent):
         return await bot.send(event, f'uploads: 查询 Prometheus 失败 ({random_log_id})', reply_to_message_id=event.message_id)
     logger.debug("uploads: Got responses from queries")
 
-    tg_bot = get_bot(config.tg_bot_self_id)
-
     text = f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n{hist}\n\n'
 
     await bot.send(event, File.photo(SCREENSHOT_DEST) + text)
