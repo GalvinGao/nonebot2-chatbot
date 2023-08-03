@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import nonebot
-from nonebot.adapters.onebot.v11 import Adapter as OneBotV11Adapter
 from nonebot.adapters.telegram.adapter import Adapter as TelegramAdapter
 from nonebot.log import default_format, logger
 
@@ -18,7 +17,6 @@ nonebot.init()
 app = nonebot.get_asgi()
 
 driver = nonebot.get_driver()
-driver.register_adapter(OneBotV11Adapter)
 driver.register_adapter(TelegramAdapter)
 
 nonebot.load_builtin_plugins("single_session")

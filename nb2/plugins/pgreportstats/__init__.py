@@ -3,16 +3,15 @@ import asyncio
 import datetime
 import itertools
 import os
-from pprint import pprint
 from time import time
-from urllib.parse import urlparse
 
 import aiohttp
 from loguru import logger
-from nonebot import get_driver, on_command
+from nonebot import get_driver, on_command, get_bot
 from nonebot.adapters import Message
-from nonebot.adapters.onebot.v11.message import MessageSegment
-from nonebot.matcher import Matcher
+from nonebot.adapters.telegram import Bot
+from nonebot.adapters.telegram.event import MessageEvent
+from nonebot.adapters.telegram.message import File
 from nonebot.params import CommandArg
 from playwright.async_api import async_playwright
 
@@ -35,14 +34,14 @@ uploads_last_run = None
 
 
 @uploads.handle()
-async def uploads_handler(matcher: Matcher, args: Message = CommandArg()):
+async def uploads_handler(bot: Bot, event: MessageEvent):
     global uploads_last_run
     if uploads_last_run is None:
         uploads_last_run = datetime.datetime.now()
     else:
         delta = datetime.datetime.now() - uploads_last_run
         if delta.seconds < config.report_stats_interval:
-            return await uploads.finish(f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒')
+            return await bot.send(event, f'uploads: 调用过快。查询限频 {config.report_stats_interval} 秒', reply_to_message_id=event.message_id)
 
     await uploads.send("uploads: 开始查询 Prometheus...")
     logger.debug("uploads: 开始查询 Prometheus...")
@@ -52,14 +51,14 @@ async def uploads_handler(matcher: Matcher, args: Message = CommandArg()):
         random_log_id = str(int(time()))
         logger.debug(f"uploads: 查询 Prometheus 失败 ({random_log_id}):", e)
         logger.exception(e)
-        return await uploads.finish(f'uploads: 查询 Prometheus 失败 ({random_log_id})')
+        return await bot.send(event, f'uploads: 查询 Prometheus 失败 ({random_log_id})', reply_to_message_id=event.message_id)
     logger.debug("uploads: Got responses from queries")
 
-    msg = MessageSegment.text(f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n') + \
-        MessageSegment.image(await read_file(SCREENSHOT_DEST)) + \
-        f'\n\n{hist}'
+    tg_bot = get_bot(config.tg_bot_self_id)
 
-    await uploads.finish(msg)
+    text = f'uploads: 于 {datetime.datetime.now().isoformat()} 的查询结果如下\n\n{sum}\n\n{hist}\n\n'
+
+    await bot.send(event, File.photo(SCREENSHOT_DEST) + text)
 
 
 async def read_file(path):
@@ -180,14 +179,14 @@ users_last_run = None
 
 
 @users.handle()
-async def users_handler(args: Message = CommandArg()):
+async def users_handler(bot: Bot, event: MessageEvent, args: list[CommandArg]):
     global users_last_run
     if users_last_run is None:
         users_last_run = datetime.datetime.now()
     else:
         delta = datetime.datetime.now() - users_last_run
         if delta.seconds < config.report_stats_interval:
-            return await users.finish(f'users: 调用过快。查询限频 {config.report_stats_interval} 秒')
+            return await bot.send(event, f'users: 调用过快。查询限频 {config.report_stats_interval} 秒', reply_to_message_id=event.message_id)
 
     if len(args) >= 1:
         recent = str(args[0]).strip()
@@ -207,9 +206,7 @@ async def users_handler(args: Message = CommandArg()):
         list_str = '\n'.join(
             f"  - {k}: {int(v)}" for [k, v] in data if int(v) > 0)
 
-        msg = MessageSegment.text(f"users: 汇报掉落用户数\n{list_str}")
+        await bot.send(event, f"users: 汇报掉落用户数\n{list_str}", reply_to_message_id=event.message_id)
     except Exception as e:
         logger.exception(e)
-        return await users.finish(MessageSegment.text(f"users: 获取汇报掉落用户数时出现错误"))
-
-    await users.finish(msg)
+        await bot.send(event, "users: 获取汇报掉落用户数时出现错误", reply_to_message_id=event.message_id)
